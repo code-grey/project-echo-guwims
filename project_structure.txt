@@ -1,0 +1,44 @@
+project-echo-guwims/
+├── README.md                  <-- Project overview for your project guide
+├── gemini.md                  <-- The Master AI Context file
+│
+├── backend/                   <-- Go 1.26 Monolith
+│   ├── prompt.md              <-- AI Persona for Go backend
+│   ├── db_rules.md            <-- PostgreSQL/PostGIS schema rules
+│   ├── Dockerfile             <-- Multi-stage build for Render
+│   ├── go.mod
+│   ├── sqlc.yaml              <-- SQLC configuration
+│   ├── cmd/
+│   │   └── server/
+│   │       └── main.go        <-- Entry point, Keep-Alive, and dependency injection
+│   ├── internal/
+│   │   ├── core/              <-- THE HEXAGON (No external dependencies)
+│   │   │   ├── domain/        <-- user.go, ticket.go (Pure Structs)
+│   │   │   └── ports/         <-- repositories.go, storage.go (Interfaces)
+│   │   └── adapters/          <-- THE OUTSIDE WORLD
+│   │       ├── handlers/      <-- http/ (net/http routes, JSON decoding)
+│   │       ├── repository/    <-- postgres/ (sqlc generated files)
+│   │       └── storage/       <-- cloudinary/ (Implements StorageProvider)
+│   └── sql/                   
+│       ├── schema.sql         <-- Table definitions
+│       └── query.sql          <-- PostGIS ST_DWithin queries for sqlc
+│
+└── mobile/                    <-- Flutter 3.2x Client
+    ├── prompt.md              <-- AI Persona for Flutter
+    ├── pubspec.yaml
+    ├── analysis_options.yaml  <-- Strict linting rules
+    ├── lib/
+        ├── main.dart
+        ├── core/              <-- App-wide utilities
+        │   ├── network/       <-- dio_client.dart (with auth interceptor)
+        │   ├── theme/         
+        │   └── router/        <-- go_router configuration
+        └── features/          <-- Feature-First Architecture
+            ├── auth/
+            │   ├── presentation/ <-- Login UI, PIN input
+            │   ├── domain/       <-- AuthState models
+            │   └── data/         <-- AuthRepository (Riverpod providers)
+            ├── reports/
+            │   ├── presentation/ <-- Camera UI, Report Forms
+            │   ├── domain/       <-- Report models
+            │   └── data/         <-- ReportRepository (Multipart uploads)

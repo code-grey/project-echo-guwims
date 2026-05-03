@@ -1,0 +1,90 @@
+# ==============================================================================
+# PROJECT ECHO (GU-WIMS) .gitignore
+# ==============================================================================
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Thumbs.db:encryptable
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+*~
+*.bak
+.project
+.classpath
+.cproject
+.settings/
+
+# =========================
+# BACKEND (Go)
+# =========================
+backend/server.exe
+backend/server
+backend/*.exe~
+backend/bin/
+backend/tmp/
+backend/vendor/
+backend/go.work
+# Environment variables (NEVER COMMIT SECRETS)
+backend/.env
+backend/.env.local
+backend/.env.test
+backend/.env.production
+# Coverage and test results
+backend/coverage.out
+backend/coverage.html
+
+# =========================
+# FRONTEND (Flutter/Dart)
+# =========================
+mobile/.dart_tool/
+mobile/.packages
+mobile/build/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/android/key.properties
+mobile/android/app/key.properties
+mobile/android/**/*.keystore
+mobile/android/**/*.jks
+# Exceptions to above
+!mobile/android/app/src/main/AndroidManifest.xml
+!mobile/android/app/build.gradle.kts
+!mobile/android/build.gradle.kts
+# iOS specific
+mobile/ios/Flutter/App.framework
+mobile/ios/Flutter/Flutter.framework
+mobile/ios/Flutter/Flutter.podspec
+mobile/ios/Flutter/Generated.xcconfig
+mobile/ios/Flutter/app.flx
+mobile/ios/Flutter/app.zip
+mobile/ios/Flutter/flutter_assets/
+mobile/ios/Flutter/flutter_export_environment.sh
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/ios/**/*.pbxuser
+mobile/ios/**/*.mode1v3
+mobile/ios/**/*.mode2v3
+mobile/ios/**/*.pbxuser
+mobile/ios/Runner.xcworkspace/xcuserdata/
+mobile/ios/Runner.xcodeproj/project.xcworkspace/xcuserdata/
+mobile/ios/Runner.xcodeproj/xcuserdata/
+# Mac OS specific within Flutter
+mobile/.metadata
+
+# =========================
+# DATABASE / DOCKER
+# =========================
+backend/db_data/
+# Prevent committing accidental db dumps
+*.sql.gz
+*.dump
