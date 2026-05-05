@@ -91,6 +91,115 @@ func (r *ReportRepo) GetWithinRadius(ctx context.Context, lat, lon, radius float
 	return res, nil
 }
 
+func (r *ReportRepo) GetByReporter(ctx context.Context, reporterID uuid.UUID) ([]*domain.Report, error) {
+	var pgReporterID pgtype.UUID
+	copy(pgReporterID.Bytes[:], reporterID[:])
+	pgReporterID.Valid = true
+
+	rows, err := r.q.GetReportsByReporter(ctx, pgReporterID)
+	if err != nil {
+		return nil, err
+	}
+
+	var res []*domain.Report
+	for _, row := range rows {
+		var lat, lon float64
+		if lo, ok := row.Longitude.(float64); ok {
+			lon = lo
+		}
+		if la, ok := row.Latitude.(float64); ok {
+			lat = la
+		}
+
+		resID, _ := uuid.FromBytes(row.ID.Bytes[:])
+		resReporterID, _ := uuid.FromBytes(row.ReporterID.Bytes[:])
+
+		res = append(res, &domain.Report{
+			ID:                   resID,
+			ReporterID:           resReporterID,
+			ReporterUniversityID: row.ReporterUniversityID,
+			Status:               domain.ReportStatus(row.Status),
+			ImageURL:             row.ImageUrl.String,
+			Metadata:             row.Metadata,
+			CreatedAt:            row.CreatedAt.Time,
+			Longitude:            lon,
+			Latitude:             lat,
+		})
+	}
+	return res, nil
+}
+
+func (r *ReportRepo) GetAll(ctx context.Context) ([]*domain.Report, error) {
+	rows, err := r.q.GetAllReports(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var res []*domain.Report
+	for _, row := range rows {
+		var lat, lon float64
+		if lo, ok := row.Longitude.(float64); ok {
+			lon = lo
+		}
+		if la, ok := row.Latitude.(float64); ok {
+			lat = la
+		}
+
+		resID, _ := uuid.FromBytes(row.ID.Bytes[:])
+		resReporterID, _ := uuid.FromBytes(row.ReporterID.Bytes[:])
+
+		res = append(res, &domain.Report{
+			ID:                   resID,
+			ReporterID:           resReporterID,
+			ReporterUniversityID: row.ReporterUniversityID,
+			Status:               domain.ReportStatus(row.Status),
+			ImageURL:             row.ImageUrl.String,
+			Metadata:             row.Metadata,
+			CreatedAt:            row.CreatedAt.Time,
+			Longitude:            lon,
+			Latitude:             lat,
+		})
+	}
+	return res, nil
+}
+
+func (r *ReportRepo) GetByQueue(ctx context.Context, department string, status domain.ReportStatus) ([]*domain.Report, error) {
+	rows, err := r.q.GetReportsByDepartmentAndStatus(ctx, GetReportsByDepartmentAndStatusParams{
+		Column1: department,
+		Status:  ReportStatus(status),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res []*domain.Report
+	for _, row := range rows {
+		var lat, lon float64
+		if lo, ok := row.Longitude.(float64); ok {
+			lon = lo
+		}
+		if la, ok := row.Latitude.(float64); ok {
+			lat = la
+		}
+
+		resID, _ := uuid.FromBytes(row.ID.Bytes[:])
+		resReporterID, _ := uuid.FromBytes(row.ReporterID.Bytes[:])
+
+		res = append(res, &domain.Report{
+			ID:                   resID,
+			ReporterID:           resReporterID,
+			ReporterUniversityID: row.ReporterUniversityID,
+			Status:               domain.ReportStatus(row.Status),
+			ImageURL:             row.ImageUrl.String,
+			Metadata:             row.Metadata,
+			CreatedAt:            row.CreatedAt.Time,
+			Longitude:            lon,
+			Latitude:             lat,
+		})
+	}
+	return res, nil
+}
+
 func (r *ReportRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Report, error) {
 	var pgID pgtype.UUID
 	copy(pgID.Bytes[:], id[:])

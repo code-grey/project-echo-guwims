@@ -16,3 +16,15 @@ Project Echo is a zero-infrastructure-cost, geospatial ticketing system designed
 - **BOLA Protection:** Strict object-level authorization enforced at the repository layer.
 - **Spatial Deduplication:** PostGIS `ST_DWithin` algorithms to cluster redundant garbage reports within a 10-meter radius.
 - **Data Integrity:** Client-side Dart Isolate compression that strictly preserves EXIF metadata (GPS/Timestamps) to prevent location spoofing.
+
+## Local Development Setup
+
+### Mobile App Connectivity
+When testing the Flutter app on a **physical device**, the device cannot use `localhost` to connect to your PC's backend.
+1. Find your PC's local IP address (run `ipconfig` in terminal, look for IPv4).
+2. Ensure your phone and PC are on the **same Wi-Fi network**.
+3. Update the `baseUrl` in `mobile/lib/core/network/dio_client.dart`:
+   ```dart
+   DioClient(this._storageService, {String baseUrl = 'http://<YOUR_IPV4_ADDRESS>:8080'})
+   ```
+4. Restart your Flutter debug session (a Hot Reload is not enough).

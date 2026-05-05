@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -8,6 +9,19 @@ import '../providers/grievance_provider.dart';
 import '../providers/report_action_provider.dart';
 import '../widgets/report_detail_sheet.dart';
 import 'package:intl/intl.dart';
+
+class AdminFilterNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void setFilter(String? filter) {
+    state = filter;
+  }
+}
+
+final adminFilterProvider = NotifierProvider<AdminFilterNotifier, String?>(() {
+  return AdminFilterNotifier();
+});
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -25,6 +39,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final user = ref.watch(authProvider).user;
     final reportsAsync = ref.watch(nearbyReportsProvider(_currentCoords));
     final reportState = ref.watch(reportActionProvider);
+    final currentFilter = ref.watch(adminFilterProvider);
 
     // Listen for upload errors
     ref.listen<ReportState>(reportActionProvider, (previous, next) {
@@ -74,18 +89,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ],
                 ),
                 if (user?.role == 'ADMIN')
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(12),
+                  InkWell(
+                    onTap: () => context.push('/admin/users'),
+                    child: Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(LucideIcons.users, color: Colors.white, size: 14),
+                          SizedBox(width: 6),
+                          Text('MANAGE USERS',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                     ),
-                    child: const Text('ADMIN MODE',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold)),
                   ),
                 IconButton(
                   onPressed: () => ref.read(authProvider.notifier).logout(),
@@ -203,11 +228,33 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       ),
                     ],
                   ),
+                  if (user?.role == 'ADMIN')
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildFilterChip('ALL', null, currentFilter),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('LOGGED', 'LOGGED', currentFilter),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('ACTION REQUIRED', 'ACTION_REQUIRED', currentFilter),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('DISPATCHED', 'DISPATCHED', currentFilter),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('RESOLVED', 'RESOLVED', currentFilter),
+                        ],
+                      ),
+                    ),
                   const SizedBox(height: 8),
                   Expanded(
                     child: reportsAsync.when(
                       data: (reports) {
-                        if (reports.isEmpty) {
+                        var filteredReports = reports;
+                        if (user?.role == 'ADMIN' && currentFilter != null) {
+                          filteredReports = reports.where((r) => r.status == currentFilter).toList();
+                        }
+
+                        if (filteredReports.isEmpty) {
                           return const Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -215,7 +262,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                 Icon(LucideIcons.checkCircle,
                                     size: 64, color: AppTheme.primaryColor),
                                 SizedBox(height: 16),
-                                Text('All clear! The campus is clean.',
+                                Text('All clear! No reports found.',
                                     style: TextStyle(
                                         color: Colors.grey, fontSize: 16)),
                               ],
@@ -229,11 +276,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           },
                           child: ListView.separated(
                             padding: const EdgeInsets.only(bottom: 24, top: 8),
-                            itemCount: reports.length,
+                            itemCount: filteredReports.length,
                             separatorBuilder: (context, index) =>
                                 const SizedBox(height: 12),
                             itemBuilder: (context, index) {
-                              final report = reports[index];
+                              final report = filteredReports[index];
                               return InkWell(
                                 onTap: () {
                                   showModalBottomSheet(
@@ -381,6 +428,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, String? value, String? currentFilter) {
+    final isSelected = currentFilter == value;
+    return ChoiceChip(
+      label: Text(label, style: TextStyle(fontSize: 10, color: isSelected ? Colors.white : Colors.black87)),
+      selected: isSelected,
+      selectedColor: AppTheme.primaryColor,
+      onSelected: (selected) {
+        if (selected) {
+          ref.read(adminFilterProvider.notifier).state = value;
+        }
+      },
     );
   }
 

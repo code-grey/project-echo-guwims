@@ -152,10 +152,72 @@ func (h *ReportHandler) GetNearby(w http.ResponseWriter, r *http.Request) {
 		radius = 10.0 // Default 10 meters
 	}
 
-	reports, err := h.repo.GetWithinRadius(r.Context(), lat, lon, radius)
+	userRole, _ := r.Context().Value(RoleKey).(string)
+	userID, _ := r.Context().Value(UserIDKey).(uuid.UUID)
+
+	var reports []*domain.Report
+	var err error
+
+	if userRole == string(domain.RoleStudent) {
+		// Students only see their own reports (BOLA enforcement)
+		reports, err = h.repo.GetByReporter(r.Context(), userID)
+	} else {
+		// Admins/Workers can see all nearby reports
+		reports, err = h.repo.GetWithinRadius(r.Context(), lat, lon, radius)
+	}
+
 	if err != nil {
-		log.Printf("Failed to fetch nearby reports: %v\n", err)
+		log.Printf("Failed to fetch reports: %v\n", err)
 		jsonError(w, http.StatusInternalServerError, "Failed to fetch reports")
+		return
+	}
+
+	jsonResponse(w, http.StatusOK, reports)
+}
+
+func (h *ReportHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	// Role check is handled by middleware, but we double-verify here for safety
+	userRole, _ := r.Context().Value(RoleKey).(string)
+	if userRole != string(domain.RoleAdmin) {
+		jsonError(w, http.StatusForbidden, "Forbidden: Admin access only")
+		return
+	}
+
+	reports, err := h.repo.GetAll(r.Context())
+	if err != nil {
+		log.Printf("Failed to fetch all reports: %v\n", err)
+		jsonError(w, http.StatusInternalServerError, "Failed to fetch reports")
+		return
+	}
+
+	jsonResponse(w, http.StatusOK, reports)
+}
+
+func (h *ReportHandler) GetQueue(w http.ResponseWriter, r *http.Request) {
+	userRole, _ := r.Context().Value(RoleKey).(string)
+
+	// Determine department based on role
+	var department string
+	switch userRole {
+	case string(domain.RoleSanitationWorker):
+		department = "ESTATE" // Or SANITATION if specifically mapped
+	case string(domain.RoleElectrician):
+		department = "ELECTRICAL"
+	case string(domain.RoleSecurity):
+		department = "SECURITY"
+	default:
+		// If an Admin hits this, they might want to see a specific department's queue
+		department = r.URL.Query().Get("department")
+		if department == "" && userRole != string(domain.RoleAdmin) {
+			jsonError(w, http.StatusForbidden, "Forbidden: Invalid role for queue access")
+			return
+		}
+	}
+
+	reports, err := h.repo.GetByQueue(r.Context(), department, domain.ReportStatusDispatched)
+	if err != nil {
+		log.Printf("Failed to fetch queue: %v\n", err)
+		jsonError(w, http.StatusInternalServerError, "Failed to fetch queue")
 		return
 	}
 
@@ -192,8 +254,8 @@ func (h *ReportHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if report.ReporterID != userID && userRole != string(domain.RoleAdmin) {
-		jsonError(w, http.StatusForbidden, "Forbidden: Only admins or the reporter can update this report")
+	if report.ReporterID != userID && userRole == string(domain.RoleStudent) {
+		jsonError(w, http.StatusForbidden, "Forbidden: Students can only update their own reports")
 		return
 	}
 

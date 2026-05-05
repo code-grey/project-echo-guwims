@@ -100,10 +100,11 @@ func main() {
 	// Initialize Handlers
 	authHandler := httpapi.NewAuthHandler(userRepo, jwtSecret)
 	reportHandler := httpapi.NewReportHandler(reportRepo, storage, vision, wp)
+	adminHandler := httpapi.NewAdminHandler(userRepo)
 
 	// Setup Router
 	mux := http.NewServeMux()
-	httpapi.RegisterRoutes(mux, authHandler, reportHandler, jwtSecret)
+	httpapi.RegisterRoutes(mux, authHandler, reportHandler, adminHandler, jwtSecret)
 
 	log.Printf("Starting server on :%s\n", port)
 	if err := http.ListenAndServe(":"+port, mux); err != nil {

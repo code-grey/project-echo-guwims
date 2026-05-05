@@ -8,6 +8,7 @@ class AppTheme {
 
   static ThemeData get lightTheme {
     return ThemeData(
+      useMaterial3: true,
       primaryColor: primaryColor,
       scaffoldBackgroundColor: backgroundColor,
       colorScheme: const ColorScheme.light(

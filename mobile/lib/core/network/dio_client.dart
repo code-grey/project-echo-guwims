@@ -9,7 +9,7 @@ class DioClient {
   final List<Map<String, dynamic>> _refreshQueue = [];
 
   DioClient(this._storageService,
-      {String baseUrl = 'http://192.168.0.101:8080'}) {
+      {String baseUrl = 'http://192.168.107.104:8080'}) {
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 10),

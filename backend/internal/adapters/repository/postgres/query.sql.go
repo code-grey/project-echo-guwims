@@ -58,6 +58,39 @@ func (q *Queries) CreateReport(ctx context.Context, arg CreateReportParams) (Cre
 	return i, err
 }
 
+const createUser = `-- name: CreateUser :one
+INSERT INTO users (university_id, pin_hash, role, auth_provider)
+VALUES ($1, $2, $3, $4)
+RETURNING id, university_id, pin_hash, auth_provider, provider_id, role, created_at
+`
+
+type CreateUserParams struct {
+	UniversityID string      `json:"university_id"`
+	PinHash      pgtype.Text `json:"pin_hash"`
+	Role         UserRole    `json:"role"`
+	AuthProvider string      `json:"auth_provider"`
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, createUser,
+		arg.UniversityID,
+		arg.PinHash,
+		arg.Role,
+		arg.AuthProvider,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.UniversityID,
+		&i.PinHash,
+		&i.AuthProvider,
+		&i.ProviderID,
+		&i.Role,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const deleteReport = `-- name: DeleteReport :exec
 DELETE FROM reports WHERE id = $1
 `
@@ -65,6 +98,96 @@ DELETE FROM reports WHERE id = $1
 func (q *Queries) DeleteReport(ctx context.Context, id pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, deleteReport, id)
 	return err
+}
+
+const deleteUser = `-- name: DeleteUser :exec
+DELETE FROM users WHERE id = $1
+`
+
+func (q *Queries) DeleteUser(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteUser, id)
+	return err
+}
+
+const getAllReports = `-- name: GetAllReports :many
+SELECT r.id, r.reporter_id, u.university_id as reporter_university_id, r.status, r.image_url, r.metadata, r.created_at, ST_X(r.location_geom::geometry) as longitude, ST_Y(r.location_geom::geometry) as latitude
+FROM reports r
+JOIN users u ON r.reporter_id = u.id
+ORDER BY r.created_at DESC
+`
+
+type GetAllReportsRow struct {
+	ID                   pgtype.UUID        `json:"id"`
+	ReporterID           pgtype.UUID        `json:"reporter_id"`
+	ReporterUniversityID string             `json:"reporter_university_id"`
+	Status               ReportStatus       `json:"status"`
+	ImageUrl             pgtype.Text        `json:"image_url"`
+	Metadata             []byte             `json:"metadata"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	Longitude            interface{}        `json:"longitude"`
+	Latitude             interface{}        `json:"latitude"`
+}
+
+func (q *Queries) GetAllReports(ctx context.Context) ([]GetAllReportsRow, error) {
+	rows, err := q.db.Query(ctx, getAllReports)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllReportsRow
+	for rows.Next() {
+		var i GetAllReportsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ReporterID,
+			&i.ReporterUniversityID,
+			&i.Status,
+			&i.ImageUrl,
+			&i.Metadata,
+			&i.CreatedAt,
+			&i.Longitude,
+			&i.Latitude,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllUsers = `-- name: GetAllUsers :many
+SELECT id, university_id, pin_hash, auth_provider, provider_id, role, created_at FROM users ORDER BY created_at DESC
+`
+
+func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.Query(ctx, getAllUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.UniversityID,
+			&i.PinHash,
+			&i.AuthProvider,
+			&i.ProviderID,
+			&i.Role,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getReportByID = `-- name: GetReportByID :one
@@ -98,11 +221,117 @@ func (q *Queries) GetReportByID(ctx context.Context, id pgtype.UUID) (GetReportB
 	return i, err
 }
 
+const getReportsByDepartmentAndStatus = `-- name: GetReportsByDepartmentAndStatus :many
+SELECT r.id, r.reporter_id, u.university_id as reporter_university_id, r.status, r.image_url, r.metadata, r.created_at, ST_X(r.location_geom::geometry) as longitude, ST_Y(r.location_geom::geometry) as latitude
+FROM reports r
+JOIN users u ON r.reporter_id = u.id
+WHERE (r.metadata->>'department') = $1::text AND r.status = $2
+ORDER BY r.created_at DESC
+`
+
+type GetReportsByDepartmentAndStatusParams struct {
+	Column1 string       `json:"column_1"`
+	Status  ReportStatus `json:"status"`
+}
+
+type GetReportsByDepartmentAndStatusRow struct {
+	ID                   pgtype.UUID        `json:"id"`
+	ReporterID           pgtype.UUID        `json:"reporter_id"`
+	ReporterUniversityID string             `json:"reporter_university_id"`
+	Status               ReportStatus       `json:"status"`
+	ImageUrl             pgtype.Text        `json:"image_url"`
+	Metadata             []byte             `json:"metadata"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	Longitude            interface{}        `json:"longitude"`
+	Latitude             interface{}        `json:"latitude"`
+}
+
+func (q *Queries) GetReportsByDepartmentAndStatus(ctx context.Context, arg GetReportsByDepartmentAndStatusParams) ([]GetReportsByDepartmentAndStatusRow, error) {
+	rows, err := q.db.Query(ctx, getReportsByDepartmentAndStatus, arg.Column1, arg.Status)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetReportsByDepartmentAndStatusRow
+	for rows.Next() {
+		var i GetReportsByDepartmentAndStatusRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ReporterID,
+			&i.ReporterUniversityID,
+			&i.Status,
+			&i.ImageUrl,
+			&i.Metadata,
+			&i.CreatedAt,
+			&i.Longitude,
+			&i.Latitude,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getReportsByReporter = `-- name: GetReportsByReporter :many
+SELECT r.id, r.reporter_id, u.university_id as reporter_university_id, r.status, r.image_url, r.metadata, r.created_at, ST_X(r.location_geom::geometry) as longitude, ST_Y(r.location_geom::geometry) as latitude
+FROM reports r
+JOIN users u ON r.reporter_id = u.id
+WHERE r.reporter_id = $1
+ORDER BY r.created_at DESC
+`
+
+type GetReportsByReporterRow struct {
+	ID                   pgtype.UUID        `json:"id"`
+	ReporterID           pgtype.UUID        `json:"reporter_id"`
+	ReporterUniversityID string             `json:"reporter_university_id"`
+	Status               ReportStatus       `json:"status"`
+	ImageUrl             pgtype.Text        `json:"image_url"`
+	Metadata             []byte             `json:"metadata"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	Longitude            interface{}        `json:"longitude"`
+	Latitude             interface{}        `json:"latitude"`
+}
+
+func (q *Queries) GetReportsByReporter(ctx context.Context, reporterID pgtype.UUID) ([]GetReportsByReporterRow, error) {
+	rows, err := q.db.Query(ctx, getReportsByReporter, reporterID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetReportsByReporterRow
+	for rows.Next() {
+		var i GetReportsByReporterRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ReporterID,
+			&i.ReporterUniversityID,
+			&i.Status,
+			&i.ImageUrl,
+			&i.Metadata,
+			&i.CreatedAt,
+			&i.Longitude,
+			&i.Latitude,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getReportsWithinRadius = `-- name: GetReportsWithinRadius :many
 SELECT r.id, r.reporter_id, u.university_id as reporter_university_id, r.status, r.image_url, r.metadata, r.created_at, ST_X(r.location_geom::geometry) as longitude, ST_Y(r.location_geom::geometry) as latitude 
 FROM reports r
 JOIN users u ON r.reporter_id = u.id
 WHERE ST_DWithin(r.location_geom::geography, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, $3)
+ORDER BY r.created_at DESC
 `
 
 type GetReportsWithinRadiusParams struct {

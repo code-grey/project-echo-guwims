@@ -49,6 +49,18 @@ class GrievanceRepository {
     return data.map((json) => GrievanceReport.fromJson(json)).toList();
   }
 
+  Future<List<GrievanceReport>> getWorkforceQueue() async {
+    final response = await _dioClient.instance.get('/api/reports/queue');
+    final List<dynamic> data = response.data ?? [];
+    return data.map((json) => GrievanceReport.fromJson(json)).toList();
+  }
+
+  Future<List<GrievanceReport>> getAllReports() async {
+    final response = await _dioClient.instance.get('/api/reports/all');
+    final List<dynamic> data = response.data ?? [];
+    return data.map((json) => GrievanceReport.fromJson(json)).toList();
+  }
+
   Future<void> updateStatus(String ticketId, String status) async {
     await _dioClient.instance.put('/api/reports/update-status', data: {
       'report_id':

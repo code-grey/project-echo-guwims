@@ -12,8 +12,14 @@ import (
 
 type Querier interface {
 	CreateReport(ctx context.Context, arg CreateReportParams) (CreateReportRow, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteReport(ctx context.Context, id pgtype.UUID) error
+	DeleteUser(ctx context.Context, id pgtype.UUID) error
+	GetAllReports(ctx context.Context) ([]GetAllReportsRow, error)
+	GetAllUsers(ctx context.Context) ([]User, error)
 	GetReportByID(ctx context.Context, id pgtype.UUID) (GetReportByIDRow, error)
+	GetReportsByDepartmentAndStatus(ctx context.Context, arg GetReportsByDepartmentAndStatusParams) ([]GetReportsByDepartmentAndStatusRow, error)
+	GetReportsByReporter(ctx context.Context, reporterID pgtype.UUID) ([]GetReportsByReporterRow, error)
 	GetReportsWithinRadius(ctx context.Context, arg GetReportsWithinRadiusParams) ([]GetReportsWithinRadiusRow, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	GetUserByUniversityID(ctx context.Context, universityID string) (User, error)
