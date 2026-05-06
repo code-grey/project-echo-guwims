@@ -13,6 +13,13 @@ final nearbyReportsProvider =
     FutureProvider.family<List<GrievanceReport>, Map<String, double>>(
         (ref, coords) async {
   final repo = ref.watch(grievanceRepositoryProvider);
+  final user = ref.watch(authProvider).user;
+
+  // Admins should see the global view, bypassing the 5km local geofence.
+  if (user?.role == 'ADMIN') {
+    return repo.getAllReports();
+  }
+
   final lat = coords['lat']!;
   final lon = coords['lon']!;
   return repo.getNearbyReports(lat, lon);
