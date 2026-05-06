@@ -11,6 +11,28 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const checkDistance = `-- name: CheckDistance :one
+SELECT ST_Distance(
+    ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
+    location_geom::geography
+)::float8 AS distance
+FROM reports
+WHERE id = $3
+`
+
+type CheckDistanceParams struct {
+	StMakepoint   interface{} `json:"st_makepoint"`
+	StMakepoint_2 interface{} `json:"st_makepoint_2"`
+	ID            pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) CheckDistance(ctx context.Context, arg CheckDistanceParams) (float64, error) {
+	row := q.db.QueryRow(ctx, checkDistance, arg.StMakepoint, arg.StMakepoint_2, arg.ID)
+	var distance float64
+	err := row.Scan(&distance)
+	return distance, err
+}
+
 const createReport = `-- name: CreateReport :one
 INSERT INTO reports (reporter_id, location_geom, image_url, metadata)
 VALUES ($1, ST_SetSRID(ST_MakePoint($2, $3), 4326), $4, $5)

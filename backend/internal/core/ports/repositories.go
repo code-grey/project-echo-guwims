@@ -23,6 +23,7 @@ type ReportRepository interface {
 	GetByQueue(ctx context.Context, department string, status domain.ReportStatus) ([]*domain.Report, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Report, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ReportStatus) error
+	CheckDistance(ctx context.Context, id uuid.UUID, lat, lon float64) (float64, error)
 	UpdateMetadata(ctx context.Context, id uuid.UUID, metadata []byte) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }

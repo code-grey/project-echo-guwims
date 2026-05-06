@@ -21,3 +21,9 @@
 - **EXIF Preservation:** Flutter MUST NOT strip EXIF data during image compression.
 
 **Directive:** Generate production-grade, tightly-scoped code. Follow the specific `/backend` and `/mobile` personas located in their respective directories.
+
+## 4. Documentation & Presentation Standards
+
+- **Tone & Style:** Documentation (README, DevLogs, Code Comments) MUST be strictly professional. Do NOT use fluff, slang, or excessive emojis (no rocket emojis). Keep it clinical and engineering-focused.
+- **System Modeling:** Maintain Data Flow Diagrams (DFDs) or architecture diagrams (e.g., Mermaid.js) whenever new subsystems or complex data lifecycles are introduced.
+- **API Documentation:** Because the backend serves as a standalone API, comprehensive API documentation (e.g., OpenAPI/Swagger or detailed Markdown docs) MUST be maintained concurrently with backend endpoint changes so third-party integration is always possible.

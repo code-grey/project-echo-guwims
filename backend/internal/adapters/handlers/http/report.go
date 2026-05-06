@@ -238,8 +238,11 @@ func (h *ReportHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	userRole, _ := r.Context().Value(RoleKey).(string)
 
 	var req struct {
-		ReportID uuid.UUID           `json:"report_id"`
-		Status   domain.ReportStatus `json:"status"`
+		ReportID      uuid.UUID           `json:"report_id"`
+		Status        domain.ReportStatus `json:"status"`
+		WorkerLat     *float64            `json:"worker_lat,omitempty"`
+		WorkerLng     *float64            `json:"worker_lng,omitempty"`
+		AfterImageURL *string             `json:"after_image_url,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -257,6 +260,43 @@ func (h *ReportHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	if report.ReporterID != userID && userRole == string(domain.RoleStudent) {
 		jsonError(w, http.StatusForbidden, "Forbidden: Students can only update their own reports")
 		return
+	}
+
+	// Anti-Fraud "Proof of Work" Validation
+	if req.Status == domain.ReportStatusResolved {
+		if req.WorkerLat == nil || req.WorkerLng == nil || req.AfterImageURL == nil || *req.AfterImageURL == "" {
+			if userRole != string(domain.RoleAdmin) {
+				jsonError(w, http.StatusBadRequest, "Missing Proof of Work: worker_lat, worker_lng, and after_image_url are required to resolve a task")
+				return
+			}
+		} else {
+			distance, err := h.repo.CheckDistance(r.Context(), req.ReportID, *req.WorkerLat, *req.WorkerLng)
+			if err != nil {
+				log.Printf("Failed to calculate distance: %v\n", err)
+				jsonError(w, http.StatusInternalServerError, "Failed to validate location")
+				return
+			}
+
+			if distance > 50 {
+				jsonError(w, http.StatusForbidden, "Proof of Work Failed: Worker must be within 50 meters of the incident location to resolve it")
+				return
+			}
+
+			// Update Metadata with the AfterImageURL
+			var meta map[string]interface{}
+			if err := json.Unmarshal(report.Metadata, &meta); err != nil {
+				meta = make(map[string]interface{})
+			}
+			meta["after_image_url"] = *req.AfterImageURL
+			meta["resolution_distance_meters"] = distance
+			
+			updatedMetaBytes, _ := json.Marshal(meta)
+			if err := h.repo.UpdateMetadata(r.Context(), req.ReportID, updatedMetaBytes); err != nil {
+				log.Printf("Failed to update report metadata: %v\n", err)
+				jsonError(w, http.StatusInternalServerError, "Failed to save Proof of Work evidence")
+				return
+			}
+		}
 	}
 
 	if err := h.repo.UpdateStatus(r.Context(), req.ReportID, req.Status); err != nil {

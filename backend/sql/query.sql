@@ -58,3 +58,11 @@ FROM reports r
 JOIN users u ON r.reporter_id = u.id
 WHERE (r.metadata->>'department') = $1::text AND r.status = $2
 ORDER BY r.created_at DESC;
+
+-- name: CheckDistance :one
+SELECT ST_Distance(
+    ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
+    location_geom::geography
+)::float8 AS distance
+FROM reports
+WHERE id = $3;

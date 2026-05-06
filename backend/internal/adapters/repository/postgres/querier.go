@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	CheckDistance(ctx context.Context, arg CheckDistanceParams) (float64, error)
 	CreateReport(ctx context.Context, arg CreateReportParams) (CreateReportRow, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteReport(ctx context.Context, id pgtype.UUID) error

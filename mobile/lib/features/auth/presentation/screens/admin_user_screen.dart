@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:image_picker/image_picker.dart'; // Abusing image picker to pick any file for now (mobile doesn't have file_picker easily without extra deps)
-// A better approach would be to use file_picker package. We will stick to single user creation for the immediate demo.
+import 'package:file_picker/file_picker.dart' as fp;
 import '../../../../core/theme/app_theme.dart';
 import '../providers/admin_user_provider.dart';
 import '../../data/models/user.dart';
@@ -140,10 +139,38 @@ class _AdminUserScreenState extends ConsumerState<AdminUserScreen> {
         actions: [
           IconButton(
             icon: const Icon(LucideIcons.fileSpreadsheet),
-            tooltip: 'Import CSV (Coming Soon)',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('CSV Import requires file_picker plugin. Pending setup.')));
+            tooltip: 'Import CSV',
+            onPressed: () async {
+              final result = await fp.FilePicker.pickFiles(
+                type: fp.FileType.custom,
+                allowedExtensions: ['csv'],
+              );
+              
+              if (result != null && result.files.single.path != null) {
+                final filePath = result.files.single.path!;
+                if (!context.mounted) return;
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Uploading CSV...')),
+                );
+                
+                final response = await ref
+                    .read(adminUserNotifierProvider.notifier)
+                    .importUsersCsv(filePath);
+                
+                if (context.mounted) {
+                  if (response != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${response['message']} (${response['count']} imported)')),
+                    );
+                  } else {
+                    final error = ref.read(adminUserNotifierProvider).error;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(error ?? 'Import failed')),
+                    );
+                  }
+                }
+              }
             },
           ),
           IconButton(

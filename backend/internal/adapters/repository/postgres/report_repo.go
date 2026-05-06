@@ -244,6 +244,18 @@ func (r *ReportRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status doma
 	})
 }
 
+func (r *ReportRepo) CheckDistance(ctx context.Context, id uuid.UUID, lat, lon float64) (float64, error) {
+	var pgID pgtype.UUID
+	copy(pgID.Bytes[:], id[:])
+	pgID.Valid = true
+
+	return r.q.CheckDistance(ctx, CheckDistanceParams{
+		StMakepoint:   lon,
+		StMakepoint_2: lat,
+		ID:            pgID,
+	})
+}
+
 func (r *ReportRepo) UpdateMetadata(ctx context.Context, id uuid.UUID, metadata []byte) error {
 	var pgID pgtype.UUID
 	copy(pgID.Bytes[:], id[:])
