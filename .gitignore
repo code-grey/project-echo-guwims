@@ -28,6 +28,7 @@ Thumbs.db:encryptable
 # =========================
 # BACKEND (Go)
 # =========================
+backend/main.exe
 backend/server.exe
 backend/server
 backend/*.exe~

@@ -13,23 +13,23 @@ class GrievanceRepository {
     required String description,
     required double latitude,
     required double longitude,
-    required String imagePath,
+    required String imageUrl,
   }) async {
     final metadata = {
       'title': title,
       'description': description,
     };
 
-    final formData = FormData.fromMap({
-      'lat': latitude.toString(),
-      'lon': longitude.toString(),
+    final data = {
+      'lat': latitude,
+      'lon': longitude,
       'metadata': jsonEncode(metadata),
-      'image': await MultipartFile.fromFile(imagePath),
-    });
+      'image_url': imageUrl,
+    };
 
     await _dioClient.instance.post(
       '/api/reports',
-      data: formData,
+      data: data,
     );
   }
 
@@ -61,12 +61,23 @@ class GrievanceRepository {
     return data.map((json) => GrievanceReport.fromJson(json)).toList();
   }
 
-  Future<void> updateStatus(String ticketId, String status) async {
-    await _dioClient.instance.put('/api/reports/update-status', data: {
-      'report_id':
-          ticketId, // The backend expects report_id based on UpdateStatus
+  Future<void> updateStatus(
+    String ticketId,
+    String status, {
+    double? workerLat,
+    double? workerLng,
+    String? afterImageUrl,
+  }) async {
+    final data = <String, dynamic>{
+      'report_id': ticketId,
       'status': status,
-    });
+    };
+
+    if (workerLat != null) data['worker_lat'] = workerLat;
+    if (workerLng != null) data['worker_lng'] = workerLng;
+    if (afterImageUrl != null) data['after_image_url'] = afterImageUrl;
+
+    await _dioClient.instance.put('/api/reports/update-status', data: data);
   }
 
   Future<void> deleteReport(String reportId) async {

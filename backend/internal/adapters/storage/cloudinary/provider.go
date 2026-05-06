@@ -4,9 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/url"
+	"strconv"
+	"time"
 
 	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
+	"github.com/code-grey/project-echo-guwims/backend/internal/core/ports"
 )
 
 type Provider struct {
@@ -37,4 +42,32 @@ func (p *Provider) DeleteImage(ctx context.Context, imageURL string) error {
 	// Not implementing full URL parsing for simplicity in prototype, 
 	// just satisfying the interface. In production, parse public ID from URL.
 	return nil
+}
+
+func (p *Provider) GenerateSignature() (*ports.StorageSignature, error) {
+	timestamp := time.Now().Unix()
+	folder := "project-echo-guwims"
+
+	params := url.Values{}
+	params.Add("folder", folder)
+	params.Add("timestamp", strconv.FormatInt(timestamp, 10))
+
+	// The SDK parses the secret into Config.Cloud.APISecret
+	secret := p.cld.Config.Cloud.APISecret
+	if secret == "" {
+		return nil, fmt.Errorf("cloudinary secret not configured")
+	}
+
+	sign, err := api.SignParameters(params, secret)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign parameters: %w", err)
+	}
+
+	return &ports.StorageSignature{
+		Signature: sign,
+		Timestamp: timestamp,
+		CloudName: p.cld.Config.Cloud.CloudName,
+		APIKey:    p.cld.Config.Cloud.APIKey,
+		Folder:    folder,
+	}, nil
 }

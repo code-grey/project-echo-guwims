@@ -26,6 +26,9 @@ func RegisterRoutes(mux *http.ServeMux, authHandler *AuthHandler, reportHandler 
 	mux.HandleFunc("/api/reports/update", authMiddleware(reportHandler.Update)) // PUT
 	mux.HandleFunc("/api/reports/delete", authMiddleware(reportHandler.Delete)) // DELETE
 
+	// Storage
+	mux.HandleFunc("/api/storage/signature", authMiddleware(reportHandler.GetStorageSignature)) // GET
+
 	// Admin - Users
 	mux.HandleFunc("/api/admin/users", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {

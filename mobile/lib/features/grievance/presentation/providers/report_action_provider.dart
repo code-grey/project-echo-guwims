@@ -1,10 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/location_service.dart';
 import '../../../../core/services/media_service.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import 'grievance_provider.dart';
 
 final locationServiceProvider = Provider((ref) => LocationService());
-final mediaServiceProvider = Provider((ref) => MediaService());
+final mediaServiceProvider = Provider((ref) {
+  final dioClient = ref.watch(dioClientProvider);
+  return MediaService(dioClient);
+});
 
 class ReportState {
   final bool isSubmitting;
@@ -78,16 +82,23 @@ class ReportNotifier extends Notifier<ReportState> {
         return false;
       }
 
-      // 2. Get location
+      // 2. Upload to Cloudinary
+      final imageUrl = await mediaService.uploadToCloudinary(image.path);
+      if (imageUrl == null) {
+        state = ReportState(error: 'Failed to upload image. Please try again.');
+        return false;
+      }
+
+      // 3. Get location
       final location = await locationService.getCurrentLocation();
 
-      // 3. Submit report
+      // 4. Submit report
       await repo.submitReport(
         title: 'Quick Report',
         description: 'Reported via 1-tap camera.',
         latitude: location.latitude,
         longitude: location.longitude,
-        imagePath: image.path,
+        imageUrl: imageUrl,
       );
 
       // 4. Refresh nearby reports

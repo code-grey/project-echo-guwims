@@ -3,11 +3,11 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/code-grey/project-echo-guwims/backend/internal/core/domain"
@@ -44,57 +44,69 @@ func (h *ReportHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 5MB limit
-	r.Body = http.MaxBytesReader(w, r.Body, 5*1024*1024)
-	if err := r.ParseMultipartForm(5 * 1024 * 1024); err != nil {
-		jsonError(w, http.StatusBadRequest, "Payload too large or invalid")
+	var req struct {
+		Lat      float64 `json:"lat"`
+		Lon      float64 `json:"lon"`
+		Metadata string  `json:"metadata"`
+		ImageURL string  `json:"image_url"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		jsonError(w, http.StatusBadRequest, "Invalid payload")
 		return
 	}
 
-	lat, _ := strconv.ParseFloat(r.FormValue("lat"), 64)
-	lon, _ := strconv.ParseFloat(r.FormValue("lon"), 64)
-	metadata := r.FormValue("metadata") // Optional JSON string
-
-	file, _, err := r.FormFile("image")
-	if err != nil {
-		jsonError(w, http.StatusBadRequest, "Image is required")
-		return
-	}
-	defer file.Close()
-
-	imageFile, _ := io.ReadAll(file)
-	contentType := http.DetectContentType(imageFile)
-	log.Printf("Detected content type: %s\n", contentType)
-
-	if !strings.HasPrefix(contentType, "image/") {
-		jsonError(w, http.StatusBadRequest, "Invalid file type: expected an image")
+	if req.ImageURL == "" {
+		jsonError(w, http.StatusBadRequest, "Image URL is required")
 		return
 	}
 
-	// Use Worker Pool for background processing (Prevention of Goroutine Sprawl)
+	// Prepare Metadata
+	metaMap := make(map[string]interface{})
+	if req.Metadata != "" {
+		json.Unmarshal([]byte(req.Metadata), &metaMap)
+	}
+
+	report := &domain.Report{
+		ReporterID: userID,
+		Latitude:   req.Lat,
+		Longitude:  req.Lon,
+		ImageURL:   req.ImageURL,
+		Status:     domain.ReportStatusLogged,
+		// We will marshal metadata after the background vision task completes,
+		// but we need a placeholder to save the initial report state safely.
+		Metadata:   []byte(`{"ai_description": "Processing..."}`),
+	}
+
+	// First, save the initial state to the DB so the user gets a 202 response immediately.
+	if err := h.repo.Create(r.Context(), report); err != nil {
+		log.Printf("Failed to save initial report: %v\n", err)
+		jsonError(w, http.StatusInternalServerError, "Failed to create report")
+		return
+	}
+
+	// Use Worker Pool for background vision analysis and update
 	h.worker.Submit(func(parentCtx context.Context) {
-		// Enforce a 30-second timeout for the entire background operation
 		ctx, cancel := context.WithTimeout(parentCtx, 30*time.Second)
 		defer cancel()
 
-		var imageURL string
-		var aiAnalysis *ports.VisionAnalysis
-
-		if len(imageFile) > 0 {
-			// 1. Upload to storage with Retry (3 attempts, start at 1s)
-			err := worker.Retry(ctx, 3, 1*time.Second, func() error {
-				url, err := h.storage.UploadImage(ctx, imageFile)
-				if err != nil {
-					return err
-				}
-				imageURL = url
-				return nil
-			})
+		var imageFile []byte
+		err := worker.Retry(ctx, 3, 1*time.Second, func() error {
+			resp, err := http.Get(req.ImageURL)
 			if err != nil {
-				log.Printf("Background: Storage upload failed after retries: %v\n", err)
+				return err
 			}
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusOK {
+				return fmt.Errorf("failed to fetch image, status: %d", resp.StatusCode)
+			}
+			imageFile, err = io.ReadAll(resp.Body)
+			return err
+		})
 
-			// 2. Analyze with AI Vision with Retry
+		var aiAnalysis *ports.VisionAnalysis
+		if err == nil && len(imageFile) > 0 {
+			// Analyze with AI Vision
 			err = worker.Retry(ctx, 3, 1*time.Second, func() error {
 				analysis, err := h.vision.AnalyzeImage(ctx, imageFile)
 				if err != nil {
@@ -104,38 +116,30 @@ func (h *ReportHandler) Create(w http.ResponseWriter, r *http.Request) {
 				return nil
 			})
 			if err != nil {
-				log.Printf("Background: Vision analysis failed after retries: %v\n", err)
+				log.Printf("Background: Vision analysis failed: %v\n", err)
 			}
+		} else {
+			log.Printf("Background: Failed to fetch image for analysis: %v\n", err)
 		}
 
-		// Prepare Metadata
-		metaMap := make(map[string]interface{})
-		if metadata != "" {
-			json.Unmarshal([]byte(metadata), &metaMap)
-		}
 		if aiAnalysis != nil {
 			metaMap["ai_description"] = aiAnalysis.Description
 			metaMap["department"] = aiAnalysis.Department
 			metaMap["ai_tags"] = aiAnalysis.Tags
 			metaMap["ai_confidence"] = aiAnalysis.Confidence
+		} else {
+			metaMap["ai_description"] = "AI Analysis failed or timed out."
+			metaMap["department"] = "UNKNOWN"
 		}
+		
 		finalMetadata, _ := json.Marshal(metaMap)
 
-		report := &domain.Report{
-			ReporterID: userID,
-			Latitude:   lat,
-			Longitude:  lon,
-			ImageURL:   imageURL,
-			Status:     domain.ReportStatusLogged,
-			Metadata:   finalMetadata,
-		}
-
-		// 3. Save to DB with Retry
-		err := worker.Retry(ctx, 3, 500*time.Millisecond, func() error {
-			return h.repo.Create(ctx, report)
+		// Update the report with the final AI metadata
+		err = worker.Retry(ctx, 3, 500*time.Millisecond, func() error {
+			return h.repo.UpdateMetadata(ctx, report.ID, finalMetadata)
 		})
 		if err != nil {
-			log.Printf("Background: Failed to save report to DB after retries: %v\n", err)
+			log.Printf("Background: Failed to update report metadata after retries: %v\n", err)
 		}
 	})
 
@@ -426,4 +430,20 @@ func (h *ReportHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonResponse(w, http.StatusOK, map[string]string{"message": "Report deleted successfully"})
+}
+
+func (h *ReportHandler) GetStorageSignature(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		jsonError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	sig, err := h.storage.GenerateSignature()
+	if err != nil {
+		log.Printf("Failed to generate storage signature: %v\n", err)
+		jsonError(w, http.StatusInternalServerError, "Failed to generate storage signature")
+		return
+	}
+
+	jsonResponse(w, http.StatusOK, sig)
 }
