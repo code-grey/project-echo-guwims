@@ -4,6 +4,7 @@ class GrievanceReport {
   final String reporterUniversityId;
   final String status;
   final String? imageUrl;
+  final String? afterImageUrl;
   final String aiDescription;
   final String aiDepartment;
   final DateTime createdAt;
@@ -16,6 +17,7 @@ class GrievanceReport {
     this.reporterUniversityId = '',
     required this.status,
     this.imageUrl,
+    this.afterImageUrl,
     required this.aiDescription,
     required this.aiDepartment,
     required this.createdAt,
@@ -29,6 +31,7 @@ class GrievanceReport {
     final aiDescription =
         metadata['ai_description'] as String? ?? 'Processing...';
     final aiDepartment = metadata['department'] as String? ?? 'UNKNOWN';
+    final afterImageUrl = metadata['after_image_url'] as String?;
 
     return GrievanceReport(
       id: json['id'] as String? ?? '',
@@ -36,6 +39,7 @@ class GrievanceReport {
       reporterUniversityId: json['reporter_university_id'] as String? ?? '',
       status: json['status'] as String? ?? 'REPORTED',
       imageUrl: json['image_url'] as String?,
+      afterImageUrl: afterImageUrl,
       aiDescription: aiDescription,
       aiDepartment: aiDepartment,
       createdAt: json['created_at'] != null
@@ -56,6 +60,7 @@ class GrievanceReport {
       'metadata': {
         'ai_description': aiDescription,
         'department': aiDepartment,
+        if (afterImageUrl != null) 'after_image_url': afterImageUrl,
       },
       'created_at': createdAt.toIso8601String(),
       'latitude': latitude,
@@ -69,6 +74,7 @@ class GrievanceReport {
     String? reporterUniversityId,
     String? status,
     String? imageUrl,
+    String? afterImageUrl,
     String? aiDescription,
     String? aiDepartment,
     DateTime? createdAt,
@@ -81,6 +87,7 @@ class GrievanceReport {
       reporterUniversityId: reporterUniversityId ?? this.reporterUniversityId,
       status: status ?? this.status,
       imageUrl: imageUrl ?? this.imageUrl,
+      afterImageUrl: afterImageUrl ?? this.afterImageUrl,
       aiDescription: aiDescription ?? this.aiDescription,
       aiDepartment: aiDepartment ?? this.aiDepartment,
       createdAt: createdAt ?? this.createdAt,

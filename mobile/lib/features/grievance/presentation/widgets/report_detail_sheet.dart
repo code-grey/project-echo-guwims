@@ -72,23 +72,104 @@ class _ReportDetailSheetState extends ConsumerState<ReportDetailSheet> {
                     // Image Header
                     if (widget.report.imageUrl != null &&
                         widget.report.imageUrl!.isNotEmpty)
-                      CachedNetworkImage(
-                        imageUrl: widget.report.imageUrl!,
-                        height: 250,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
+                      if (widget.report.afterImageUrl != null &&
+                          widget.report.afterImageUrl!.isNotEmpty)
+                        SizedBox(
                           height: 250,
-                          color: Colors.grey[200],
-                          child:
-                              const Center(child: CircularProgressIndicator()),
-                        ),
-                        errorWidget: (context, url, error) => Container(
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    CachedNetworkImage(
+                                      imageUrl: widget.report.imageUrl!,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) => Container(
+                                        color: Colors.grey[200],
+                                        child: const Center(
+                                            child: CircularProgressIndicator()),
+                                      ),
+                                      errorWidget: (context, url, error) =>
+                                          Container(
+                                        color: Colors.grey[200],
+                                        child: const Icon(LucideIcons.imageOff,
+                                            size: 50, color: Colors.grey),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 8,
+                                      left: 8,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                        color: Colors.black54,
+                                        child: const Text('Before',
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 2),
+                              Expanded(
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    CachedNetworkImage(
+                                      imageUrl: widget.report.afterImageUrl!,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) => Container(
+                                        color: Colors.grey[200],
+                                        child: const Center(
+                                            child: CircularProgressIndicator()),
+                                      ),
+                                      errorWidget: (context, url, error) =>
+                                          Container(
+                                        color: Colors.grey[200],
+                                        child: const Icon(LucideIcons.imageOff,
+                                            size: 50, color: Colors.grey),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 8,
+                                      left: 8,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                        color: Colors.black54,
+                                        child: const Text('After',
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        CachedNetworkImage(
+                          imageUrl: widget.report.imageUrl!,
                           height: 250,
-                          color: Colors.grey[200],
-                          child: const Icon(LucideIcons.imageOff,
-                              size: 50, color: Colors.grey),
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            height: 250,
+                            color: Colors.grey[200],
+                            child:
+                                const Center(child: CircularProgressIndicator()),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            height: 250,
+                            color: Colors.grey[200],
+                            child: const Icon(LucideIcons.imageOff,
+                                size: 50, color: Colors.grey),
+                          ),
                         ),
-                      ),
 
                     Padding(
                       padding: const EdgeInsets.all(24.0),
