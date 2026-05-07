@@ -107,7 +107,11 @@ func main() {
 	httpapi.RegisterRoutes(mux, authHandler, reportHandler, adminHandler, jwtSecret)
 
 	log.Printf("Starting server on :%s\n", port)
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
+	
+	// Apply CORS Middleware globally
+	corsHandler := httpapi.CORSMiddleware(mux)
+	
+	if err := http.ListenAndServe(":"+port, corsHandler); err != nil {
 		log.Fatal(err)
 	}
 }
