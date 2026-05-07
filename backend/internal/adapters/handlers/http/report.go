@@ -87,11 +87,11 @@ func (h *ReportHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	// Use Worker Pool for background vision analysis and update
 	h.worker.Submit(func(parentCtx context.Context) {
-		ctx, cancel := context.WithTimeout(parentCtx, 30*time.Second)
+		ctx, cancel := context.WithTimeout(parentCtx, 60*time.Second)
 		defer cancel()
 
 		var imageFile []byte
-		err := worker.Retry(ctx, 3, 1*time.Second, func() error {
+		err := worker.Retry(ctx, 5, 2*time.Second, func() error {
 			resp, err := http.Get(req.ImageURL)
 			if err != nil {
 				return err
@@ -107,7 +107,7 @@ func (h *ReportHandler) Create(w http.ResponseWriter, r *http.Request) {
 		var aiAnalysis *ports.VisionAnalysis
 		if err == nil && len(imageFile) > 0 {
 			// Analyze with AI Vision
-			err = worker.Retry(ctx, 3, 1*time.Second, func() error {
+			err = worker.Retry(ctx, 3, 2*time.Second, func() error {
 				analysis, err := h.vision.AnalyzeImage(ctx, imageFile)
 				if err != nil {
 					return err
