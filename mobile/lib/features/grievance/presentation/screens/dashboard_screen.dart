@@ -86,27 +86,30 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
                 if (user?.role == 'ADMIN')
                   InkWell(
                     onTap: () => context.push('/admin/users'),
                     child: Container(
                       padding:
-                          const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         color: Colors.white24,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
                       ),
                       child: const Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(LucideIcons.users, color: Colors.white, size: 14),
-                          SizedBox(width: 6),
-                          Text('MANAGE USERS',
+                          SizedBox(width: 4),
+                          Text('MANAGE',
                               style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 10,
@@ -119,6 +122,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   onPressed: () => ref.read(authProvider.notifier).logout(),
                   icon: const Icon(LucideIcons.logOut, color: Colors.white),
                   tooltip: 'Logout',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                 ),
               ],
             ),
@@ -360,15 +365,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                                     MainAxisAlignment
                                                         .spaceBetween,
                                                 children: [
-                                                  Text(
-                                                    'ID: ${report.id.substring(0, 8)}...',
-                                                    style: const TextStyle(
-                                                      color: Colors.grey,
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w600,
+                                                  Flexible(
+                                                    child: Text(
+                                                      'ID: ${report.id.substring(0, 8)}...',
+                                                      style: const TextStyle(
+                                                        color: Colors.grey,
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
                                                     ),
                                                   ),
+                                                  const SizedBox(width: 4),
                                                   _buildStatusPill(
                                                       report.status),
                                                 ],
@@ -390,13 +400,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                                       size: 12,
                                                       color: Colors.grey),
                                                   const SizedBox(width: 4),
-                                                  Text(
-                                                    '${report.latitude.toStringAsFixed(4)}, ${report.longitude.toStringAsFixed(4)}',
-                                                    style: const TextStyle(
-                                                        color: Colors.grey,
-                                                        fontSize: 11),
+                                                  Expanded(
+                                                    child: Text(
+                                                      '${report.latitude.toStringAsFixed(4)}, ${report.longitude.toStringAsFixed(4)}',
+                                                      style: const TextStyle(
+                                                          color: Colors.grey,
+                                                          fontSize: 11),
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
                                                   ),
-                                                  const Spacer(),
+                                                  const SizedBox(width: 4),
                                                   Text(
                                                     DateFormat(
                                                             'MMM dd, hh:mm a')
