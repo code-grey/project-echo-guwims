@@ -5,6 +5,7 @@ class GrievanceReport {
   final String status;
   final String? imageUrl;
   final String? afterImageUrl;
+  final String? resolvedByUniversityId;
   final String aiDescription;
   final String aiDepartment;
   final DateTime createdAt;
@@ -18,6 +19,7 @@ class GrievanceReport {
     required this.status,
     this.imageUrl,
     this.afterImageUrl,
+    this.resolvedByUniversityId,
     required this.aiDescription,
     required this.aiDepartment,
     required this.createdAt,
@@ -32,6 +34,7 @@ class GrievanceReport {
         metadata['ai_description'] as String? ?? 'Processing...';
     final aiDepartment = metadata['department'] as String? ?? 'UNKNOWN';
     final afterImageUrl = metadata['after_image_url'] as String?;
+    final resolvedByUniversityId = metadata['resolved_by_university_id'] as String?;
 
     return GrievanceReport(
       id: json['id'] as String? ?? '',
@@ -40,6 +43,7 @@ class GrievanceReport {
       status: json['status'] as String? ?? 'REPORTED',
       imageUrl: json['image_url'] as String?,
       afterImageUrl: afterImageUrl,
+      resolvedByUniversityId: resolvedByUniversityId,
       aiDescription: aiDescription,
       aiDepartment: aiDepartment,
       createdAt: json['created_at'] != null
@@ -61,6 +65,7 @@ class GrievanceReport {
         'ai_description': aiDescription,
         'department': aiDepartment,
         if (afterImageUrl != null) 'after_image_url': afterImageUrl,
+        if (resolvedByUniversityId != null) 'resolved_by_university_id': resolvedByUniversityId,
       },
       'created_at': createdAt.toIso8601String(),
       'latitude': latitude,
@@ -75,6 +80,7 @@ class GrievanceReport {
     String? status,
     String? imageUrl,
     String? afterImageUrl,
+    String? resolvedByUniversityId,
     String? aiDescription,
     String? aiDepartment,
     DateTime? createdAt,
@@ -88,6 +94,7 @@ class GrievanceReport {
       status: status ?? this.status,
       imageUrl: imageUrl ?? this.imageUrl,
       afterImageUrl: afterImageUrl ?? this.afterImageUrl,
+      resolvedByUniversityId: resolvedByUniversityId ?? this.resolvedByUniversityId,
       aiDescription: aiDescription ?? this.aiDescription,
       aiDepartment: aiDepartment ?? this.aiDepartment,
       createdAt: createdAt ?? this.createdAt,

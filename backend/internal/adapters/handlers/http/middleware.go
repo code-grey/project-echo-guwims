@@ -14,6 +14,7 @@ type ContextKey string
 
 const UserIDKey ContextKey = "user_id"
 const RoleKey ContextKey = "role"
+const UniversityIDKey ContextKey = "university_id"
 
 func AuthMiddleware(secret string) func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
@@ -61,6 +62,9 @@ func AuthMiddleware(secret string) func(http.HandlerFunc) http.HandlerFunc {
 			ctx := context.WithValue(r.Context(), UserIDKey, uid)
 			if roleStr, ok := claims["role"].(string); ok {
 				ctx = context.WithValue(ctx, RoleKey, roleStr)
+			}
+			if uniIDStr, ok := claims["university_id"].(string); ok {
+				ctx = context.WithValue(ctx, UniversityIDKey, uniIDStr)
 			}
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}

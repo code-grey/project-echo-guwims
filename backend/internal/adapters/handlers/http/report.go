@@ -293,6 +293,9 @@ func (h *ReportHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 			}
 			meta["after_image_url"] = *req.AfterImageURL
 			meta["resolution_distance_meters"] = distance
+			if uniID, ok := r.Context().Value(UniversityIDKey).(string); ok {
+				meta["resolved_by_university_id"] = uniID
+			}
 			
 			updatedMetaBytes, _ := json.Marshal(meta)
 			if err := h.repo.UpdateMetadata(r.Context(), req.ReportID, updatedMetaBytes); err != nil {

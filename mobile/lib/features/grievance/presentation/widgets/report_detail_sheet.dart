@@ -222,6 +222,35 @@ class _ReportDetailSheetState extends ConsumerState<ReportDetailSheet> {
                             const SizedBox(height: 16),
                           ],
 
+                          if (isAdmin &&
+                              widget.report.status == 'RESOLVED' &&
+                              widget.report.resolvedByUniversityId != null) ...[
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                    color: Colors.green.withValues(alpha: 0.3)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(LucideIcons.checkCircle2,
+                                      size: 16, color: Colors.green),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Resolved by: ${widget.report.resolvedByUniversityId}',
+                                    style: const TextStyle(
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+
                           // Department Tag
                           Row(
                             children: [

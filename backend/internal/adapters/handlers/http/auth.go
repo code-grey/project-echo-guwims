@@ -57,9 +57,10 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	// 15-minute Access Token
 	claims := jwt.MapClaims{
-		"sub":  user.ID.String(),
-		"role": string(user.Role),
-		"exp":  time.Now().Add(15 * time.Minute).Unix(),
+		"sub":           user.ID.String(),
+		"university_id": user.UniversityID,
+		"role":          string(user.Role),
+		"exp":           time.Now().Add(15 * time.Minute).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(h.jwtSecret)
