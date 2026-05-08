@@ -457,15 +457,15 @@ func (q *Queries) UpdateReportMetadata(ctx context.Context, arg UpdateReportMeta
 }
 
 const updateReportStatus = `-- name: UpdateReportStatus :exec
-UPDATE reports SET status = $2, resolved_at = CASE WHEN $2::text = 'RESOLVED' THEN NOW() ELSE resolved_at END WHERE id = $1
+UPDATE reports SET status = $2::report_status, resolved_at = CASE WHEN $2::report_status = 'RESOLVED' THEN NOW() ELSE resolved_at END WHERE id = $1
 `
 
 type UpdateReportStatusParams struct {
-	ID     pgtype.UUID  `json:"id"`
-	Status ReportStatus `json:"status"`
+	ID      pgtype.UUID  `json:"id"`
+	Column2 ReportStatus `json:"column_2"`
 }
 
 func (q *Queries) UpdateReportStatus(ctx context.Context, arg UpdateReportStatusParams) error {
-	_, err := q.db.Exec(ctx, updateReportStatus, arg.ID, arg.Status)
+	_, err := q.db.Exec(ctx, updateReportStatus, arg.ID, arg.Column2)
 	return err
 }

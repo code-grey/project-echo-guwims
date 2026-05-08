@@ -239,8 +239,8 @@ func (r *ReportRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status doma
 	pgID.Valid = true
 
 	return r.q.UpdateReportStatus(ctx, UpdateReportStatusParams{
-		ID:     pgID,
-		Status: ReportStatus(status),
+		ID:      pgID,
+		Column2: ReportStatus(status),
 	})
 }
 
