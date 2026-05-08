@@ -44,7 +44,7 @@ type CreateReportParams struct {
 	StMakepoint   interface{} `json:"st_makepoint"`
 	StMakepoint_2 interface{} `json:"st_makepoint_2"`
 	ImageUrl      pgtype.Text `json:"image_url"`
-	Metadata      []byte      `json:"metadata"`
+	Metadata      string      `json:"metadata"`
 }
 
 type CreateReportRow struct {
@@ -52,7 +52,7 @@ type CreateReportRow struct {
 	ReporterID pgtype.UUID        `json:"reporter_id"`
 	Status     ReportStatus       `json:"status"`
 	ImageUrl   pgtype.Text        `json:"image_url"`
-	Metadata   []byte             `json:"metadata"`
+	Metadata   string             `json:"metadata"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 	Longitude  interface{}        `json:"longitude"`
 	Latitude   interface{}        `json:"latitude"`
@@ -144,7 +144,7 @@ type GetAllReportsRow struct {
 	ReporterUniversityID string             `json:"reporter_university_id"`
 	Status               ReportStatus       `json:"status"`
 	ImageUrl             pgtype.Text        `json:"image_url"`
-	Metadata             []byte             `json:"metadata"`
+	Metadata             string             `json:"metadata"`
 	CreatedAt            pgtype.Timestamptz `json:"created_at"`
 	Longitude            interface{}        `json:"longitude"`
 	Latitude             interface{}        `json:"latitude"`
@@ -221,7 +221,7 @@ type GetReportByIDRow struct {
 	ReporterID pgtype.UUID        `json:"reporter_id"`
 	Status     ReportStatus       `json:"status"`
 	ImageUrl   pgtype.Text        `json:"image_url"`
-	Metadata   []byte             `json:"metadata"`
+	Metadata   string             `json:"metadata"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 	Longitude  interface{}        `json:"longitude"`
 	Latitude   interface{}        `json:"latitude"`
@@ -262,7 +262,7 @@ type GetReportsByDepartmentAndStatusRow struct {
 	ReporterUniversityID string             `json:"reporter_university_id"`
 	Status               ReportStatus       `json:"status"`
 	ImageUrl             pgtype.Text        `json:"image_url"`
-	Metadata             []byte             `json:"metadata"`
+	Metadata             string             `json:"metadata"`
 	CreatedAt            pgtype.Timestamptz `json:"created_at"`
 	Longitude            interface{}        `json:"longitude"`
 	Latitude             interface{}        `json:"latitude"`
@@ -312,7 +312,7 @@ type GetReportsByReporterRow struct {
 	ReporterUniversityID string             `json:"reporter_university_id"`
 	Status               ReportStatus       `json:"status"`
 	ImageUrl             pgtype.Text        `json:"image_url"`
-	Metadata             []byte             `json:"metadata"`
+	Metadata             string             `json:"metadata"`
 	CreatedAt            pgtype.Timestamptz `json:"created_at"`
 	Longitude            interface{}        `json:"longitude"`
 	Latitude             interface{}        `json:"latitude"`
@@ -368,7 +368,7 @@ type GetReportsWithinRadiusRow struct {
 	ReporterUniversityID string             `json:"reporter_university_id"`
 	Status               ReportStatus       `json:"status"`
 	ImageUrl             pgtype.Text        `json:"image_url"`
-	Metadata             []byte             `json:"metadata"`
+	Metadata             string             `json:"metadata"`
 	CreatedAt            pgtype.Timestamptz `json:"created_at"`
 	Longitude            interface{}        `json:"longitude"`
 	Latitude             interface{}        `json:"latitude"`
@@ -448,7 +448,7 @@ UPDATE reports SET metadata = $2 WHERE id = $1
 
 type UpdateReportMetadataParams struct {
 	ID       pgtype.UUID `json:"id"`
-	Metadata []byte      `json:"metadata"`
+	Metadata string      `json:"metadata"`
 }
 
 func (q *Queries) UpdateReportMetadata(ctx context.Context, arg UpdateReportMetadataParams) error {

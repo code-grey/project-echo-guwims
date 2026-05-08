@@ -29,7 +29,7 @@ func (r *ReportRepo) Create(ctx context.Context, t *domain.Report) error {
 		StMakepoint:   t.Longitude,
 		StMakepoint_2: t.Latitude,
 		ImageUrl:      pgtype.Text{String: t.ImageURL, Valid: t.ImageURL != ""},
-		Metadata:      t.Metadata,
+		Metadata:      string(t.Metadata),
 	})
 	if err != nil {
 		return err
@@ -82,7 +82,7 @@ func (r *ReportRepo) GetWithinRadius(ctx context.Context, lat, lon, radius float
 			ReporterUniversityID: row.ReporterUniversityID,
 			Status:               domain.ReportStatus(row.Status),
 			ImageURL:             row.ImageUrl.String,
-			Metadata:             row.Metadata,
+			Metadata:             []byte(row.Metadata),
 			CreatedAt:            row.CreatedAt.Time,
 			Longitude:            lon,
 			Latitude:             lat,
@@ -120,7 +120,7 @@ func (r *ReportRepo) GetByReporter(ctx context.Context, reporterID uuid.UUID) ([
 			ReporterUniversityID: row.ReporterUniversityID,
 			Status:               domain.ReportStatus(row.Status),
 			ImageURL:             row.ImageUrl.String,
-			Metadata:             row.Metadata,
+			Metadata:             []byte(row.Metadata),
 			CreatedAt:            row.CreatedAt.Time,
 			Longitude:            lon,
 			Latitude:             lat,
@@ -154,7 +154,7 @@ func (r *ReportRepo) GetAll(ctx context.Context) ([]*domain.Report, error) {
 			ReporterUniversityID: row.ReporterUniversityID,
 			Status:               domain.ReportStatus(row.Status),
 			ImageURL:             row.ImageUrl.String,
-			Metadata:             row.Metadata,
+			Metadata:             []byte(row.Metadata),
 			CreatedAt:            row.CreatedAt.Time,
 			Longitude:            lon,
 			Latitude:             lat,
@@ -191,7 +191,7 @@ func (r *ReportRepo) GetByQueue(ctx context.Context, department string, status d
 			ReporterUniversityID: row.ReporterUniversityID,
 			Status:               domain.ReportStatus(row.Status),
 			ImageURL:             row.ImageUrl.String,
-			Metadata:             row.Metadata,
+			Metadata:             []byte(row.Metadata),
 			CreatedAt:            row.CreatedAt.Time,
 			Longitude:            lon,
 			Latitude:             lat,
@@ -226,7 +226,7 @@ func (r *ReportRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Report,
 		ReporterID: resReporterID,
 		Status:     domain.ReportStatus(row.Status),
 		ImageURL:   row.ImageUrl.String,
-		Metadata:   row.Metadata,
+		Metadata:   []byte(row.Metadata),
 		CreatedAt:  row.CreatedAt.Time,
 		Longitude:  lon,
 		Latitude:   lat,
@@ -263,7 +263,7 @@ func (r *ReportRepo) UpdateMetadata(ctx context.Context, id uuid.UUID, metadata 
 
 	return r.q.UpdateReportMetadata(ctx, UpdateReportMetadataParams{
 		ID:       pgID,
-		Metadata: metadata,
+		Metadata: string(metadata),
 	})
 }
 

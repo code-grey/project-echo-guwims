@@ -105,7 +105,7 @@ type CampusResource struct {
 	Title        string             `json:"title"`
 	ResourceType string             `json:"resource_type"`
 	TargetUrl    string             `json:"target_url"`
-	Metadata     []byte             `json:"metadata"`
+	Metadata     string             `json:"metadata"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 }
 
@@ -115,7 +115,7 @@ type Report struct {
 	Status       ReportStatus       `json:"status"`
 	LocationGeom interface{}        `json:"location_geom"`
 	ImageUrl     pgtype.Text        `json:"image_url"`
-	Metadata     []byte             `json:"metadata"`
+	Metadata     string             `json:"metadata"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 	ResolvedAt   pgtype.Timestamptz `json:"resolved_at"`
 }
