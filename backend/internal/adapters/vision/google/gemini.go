@@ -68,6 +68,8 @@ func (p *GeminiVisionProvider) AnalyzeImage(ctx context.Context, image []byte) (
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		log.Printf("Gemini API error: status %d, response: %s", resp.StatusCode, string(body))
 		return nil, fmt.Errorf("gemini api error: status %d", resp.StatusCode)
 	}
 
