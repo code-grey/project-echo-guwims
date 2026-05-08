@@ -53,7 +53,7 @@ func (p *GeminiVisionProvider) AnalyzeImage(ctx context.Context, image []byte) (
 			},
 		},
 		"generationConfig": map[string]interface{}{
-			"response_mime_type": "application/json",
+			"responseMimeType": "application/json",
 		},
 	}
 
