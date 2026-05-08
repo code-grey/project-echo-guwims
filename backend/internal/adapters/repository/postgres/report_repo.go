@@ -250,9 +250,9 @@ func (r *ReportRepo) CheckDistance(ctx context.Context, id uuid.UUID, lat, lon f
 	pgID.Valid = true
 
 	return r.q.CheckDistance(ctx, CheckDistanceParams{
-		StMakepoint:   lon,
-		StMakepoint_2: lat,
-		ID:            pgID,
+		Column1: lon,
+		Column2: lat,
+		ID:      pgID,
 	})
 }
 

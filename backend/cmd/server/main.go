@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	httpapi "github.com/code-grey/project-echo-guwims/backend/internal/adapters/handlers/http"
@@ -106,12 +108,51 @@ func main() {
 	mux := http.NewServeMux()
 	httpapi.RegisterRoutes(mux, authHandler, reportHandler, adminHandler, jwtSecret)
 
-	log.Printf("Starting server on :%s\n", port)
-	
 	// Apply CORS Middleware globally
 	corsHandler := httpapi.CORSMiddleware(mux)
-	
-	if err := http.ListenAndServe(":"+port, corsHandler); err != nil {
-		log.Fatal(err)
+
+	srv := &http.Server{
+		Addr:    ":" + port,
+		Handler: corsHandler,
+	}
+
+	// Channel to listen for errors coming from the listener.
+	serverErrors := make(chan error, 1)
+
+	// Start the service listening for requests.
+	go func() {
+		log.Printf("Starting server on :%s\n", port)
+		serverErrors <- srv.ListenAndServe()
+	}()
+
+	// Channel to listen for an interrupt or terminate signal from the OS.
+	osSignals := make(chan os.Signal, 1)
+	signal.Notify(osSignals, os.Interrupt, syscall.SIGTERM)
+
+	// Blocking main and waiting for shutdown.
+	select {
+	case err := <-serverErrors:
+		log.Fatalf("Error starting server: %v", err)
+
+	case <-osSignals:
+		log.Println("Graceful shutdown initiated...")
+
+		// Create context with timeout for the graceful shutdown
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		// Asking listener to shut down and shed load.
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Printf("Graceful shutdown did not complete in 30s: %v", err)
+			if err := srv.Close(); err != nil {
+				log.Fatalf("Could not stop server gracefully: %v", err)
+			}
+		}
+
+		// Wait for background workers to finish their current tasks
+		log.Println("Waiting for background workers to finish...")
+		wp.Stop()
+		
+		log.Println("Server stopped gracefully")
 	}
 }

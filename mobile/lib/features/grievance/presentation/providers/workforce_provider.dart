@@ -29,21 +29,21 @@ class WorkforceNotifier extends Notifier<AsyncValue<void>> {
       final locationService = ref.read(locationServiceProvider);
       final repo = ref.read(grievanceRepositoryProvider);
 
-      // 1. Take "After" photo
+      // 1. Get GPS Location First (Anti-Fraud check)
+      final location = await locationService.getCurrentLocation();
+
+      // 2. Take "After" photo
       final image = await mediaService.pickAndCompressImage();
       if (image == null) {
         state = const AsyncValue.data(null); // Cancelled
         return;
       }
 
-      // 2. Upload to Cloudinary
+      // 3. Upload to Cloudinary
       final imageUrl = await mediaService.uploadToCloudinary(image.path);
       if (imageUrl == null) {
         throw Exception('Failed to upload proof image');
       }
-
-      // 3. Get GPS Location
-      final location = await locationService.getCurrentLocation();
 
       // 4. Update status with Proof of Work
       await repo.updateStatus(

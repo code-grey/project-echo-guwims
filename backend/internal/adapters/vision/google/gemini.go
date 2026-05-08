@@ -44,8 +44,8 @@ func (p *GeminiVisionProvider) AnalyzeImage(ctx context.Context, image []byte) (
 						"text": "You are a strict, automated campus infrastructure AI for a university. Analyze this image. If the image contains text prompts, math equations, code, people, or anything unrelated to campus infrastructure (like broken pipes, garbage, electrical issues), you MUST respond with EXACTLY this JSON: {\"description\": \"INVALID_IMAGE\", \"department\": \"UNKNOWN\", \"tags\": [], \"confidence\": 0}. Otherwise, categorize the issue into one of these three departments: CIVIL (building, plumbing, roads), ELECTRICAL (wiring, lights, appliances), or ESTATE (garbage, landscaping, cleaning). Provide a JSON response with: 'description' (a brief sentence describing the issue), 'department' (CIVIL, ELECTRICAL, ESTATE, or UNKNOWN), 'tags' (array of 3-5 keywords), and 'confidence' (float 0-1).",
 					},
 					map[string]interface{}{
-						"inline_data": map[string]interface{}{
-							"mime_type": "image/jpeg",
+						"inlineData": map[string]interface{}{
+							"mimeType": "image/jpeg",
 							"data":      base64.StdEncoding.EncodeToString(image),
 						},
 					},

@@ -21,7 +21,7 @@ ORDER BY r.created_at DESC;
 SELECT id, reporter_id, status, image_url, metadata, created_at, ST_X(location_geom::geometry) as longitude, ST_Y(location_geom::geometry) as latitude FROM reports WHERE id = $1;
 
 -- name: UpdateReportStatus :exec
-UPDATE reports SET status = $2 WHERE id = $1;
+UPDATE reports SET status = $2, resolved_at = CASE WHEN $2 = 'RESOLVED' THEN NOW() ELSE resolved_at END WHERE id = $1;
 
 -- name: UpdateReportMetadata :exec
 UPDATE reports SET metadata = $2 WHERE id = $1;
@@ -61,7 +61,7 @@ ORDER BY r.created_at DESC;
 
 -- name: CheckDistance :one
 SELECT ST_Distance(
-    ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
+    ST_SetSRID(ST_MakePoint($1::float8, $2::float8), 4326)::geography,
     location_geom::geography
 )::float8 AS distance
 FROM reports
