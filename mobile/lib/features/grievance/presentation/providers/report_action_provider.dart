@@ -68,8 +68,6 @@ class ReportNotifier extends Notifier<ReportState> {
   }
 
   Future<bool> createReport() async {
-    state = ReportState(isSubmitting: true);
-
     try {
       final mediaService = ref.read(mediaServiceProvider);
       final locationService = ref.read(locationServiceProvider);
@@ -81,6 +79,9 @@ class ReportNotifier extends Notifier<ReportState> {
         state = ReportState(); // Cancelled by user
         return false;
       }
+
+      // Start loading spinner only after image is picked
+      state = ReportState(isSubmitting: true);
 
       // 2. Upload to Cloudinary
       final imageUrl = await mediaService.uploadToCloudinary(image.path);

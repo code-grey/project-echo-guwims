@@ -457,7 +457,7 @@ func (q *Queries) UpdateReportMetadata(ctx context.Context, arg UpdateReportMeta
 }
 
 const updateReportStatus = `-- name: UpdateReportStatus :exec
-UPDATE reports SET status = $2, resolved_at = CASE WHEN $2 = 'RESOLVED' THEN NOW() ELSE resolved_at END WHERE id = $1
+UPDATE reports SET status = $2, resolved_at = CASE WHEN $2::text = 'RESOLVED' THEN NOW() ELSE resolved_at END WHERE id = $1
 `
 
 type UpdateReportStatusParams struct {
