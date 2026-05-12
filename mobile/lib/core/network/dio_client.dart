@@ -9,7 +9,7 @@ class DioClient {
   final List<Map<String, dynamic>> _refreshQueue = [];
 
   DioClient(this._storageService,
-      {String baseUrl = 'https://echo-gu.onrender.com'}) {
+      {String baseUrl = 'https://echo-gu-us-west.onrender.com'}) {
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 45),
